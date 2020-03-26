@@ -1,0 +1,75 @@
+Instructions
+
+
+PRINTING
+========
+
+You will need to print all the files in the STL folder. For some files you'll need more then one; the number needed is indicated on each file. Note that for the LED holder for the rear logic display you will use three (3) of the bases. These can be glued together for if you like, but it is not necessary.
+
+I strongly recommend printing the LED bases in black (or other dark) filament to prevent light from one LED going through the filament and into the surrounding fibers. I tried both white and black, and black gives *a lot* better results!
+
+Look into "Horizontal expansion" (in Cura; may have different names in other slicers) and get your printer calibrated before printing the parts. I learned it from this video: https://www.youtube.com/watch?v=TFsTo6cDmF8 
+You should have a snug fit, especially for the optical fibers. If the holes are a little bit tight they can be drilled out with a 2mm bit. I recommend running the drill in reverse when doing this so it is less aggressive on the walls.
+
+I printed mine with a .4 nozzle, .2mm layer height, 40% infill. Printed front face down (ridges are on the back side for some more strength) If the front plates warp you can add more infill or even scale it in the Z direction.
+
+
+SOLDERING
+=========
+I recommend soldering rows of ten, then test them to make sure they are OK before connecting them into larger modules.
+
+The way I do it is to take ten LEDs and fold the positive leg 90 degrees to one side, then the negative to the other. I leave the data in/out as they are. Then I use a pair if pliers to fold the legs 90 degrees "forward". Take care not to twist the legs too much when you do this as it may damage them. Try instead to "push" the LED while holding the LED.
+
+NOTE: Take care to fold all the legs in the same direction! Keep an eye on the length on the legs and the flat side of the bulb. These are indicators of direction.
+
+When the ten LEDs are folder I place then in the holder. Try to get them evenly inserted into the holder for easier assembly. When you do this the legs should align up nicely and the solder is a breeze. I don't bother cutting the power/ground legs. Also leave the protruding end on for now; it is useful for connecting power and data for testing. Also, for the read display you will be connecting three rows, and having these long legs will make it easier.
+
+When the power and ground is soldered it is only a matter of folding the Din and Dout pins. I usually also cut them after folding them, leaving a little overlap. Then the soldering here is also easy.
+
+You now have a row of 10 LEDs. You should use the test-function in the code. It should set all LEDs to R/G/B to test the color.
+
+I have connected the LEDs in rows going the same way (starting top left), but the library used (Adafruit NeoMatrix) allows for easy configuration of direction and starting row, allowing  start in any corner, and also connecting the row back and forth (zig-zag). Because I went left-right on all rows I alternated the sides I folded the legs of the LEDs so that + and - is not right next to each other when the rows are inserted into the holders. This makes it a lot easier to connect power and prevents shorts if the rows touch each other. If you opt for the zig-zag pattern (I'll try this on the next display) all legs should be folded the same way, and you'll avoid shorts since every second row is going in the opposite direction.
+
+I also soldered in a capacitor to help with any power surges in the circuit. This is optional. I used a 100uf as that was what I had at hand at the moment.
+
+
+OPTIC FIBER
+===========
+
+The parts are made for using 2mm optic fiber. Don't be afraid to leave the fiber sticking out a bit in the front. This can prevent fibers from being pulled in wile you are working on them, and they can easily be cut flush later. I also recommend testing the fot of the optic fiber while finishing the front plate.
+
+NOTE: You should have LEDs mounted in the LED bases when inserting the fibers to avoid inserting the fiber too far, as this might leave no room for the LEDs to be inserted.
+
+Front displays
+--------------
+For the front logic displays you should start by adding ~10cm fiber to each corner and thus connect the front and the LED base. Then fit it inside the dome to see if there is enough room between the fiber and the hinges for the surrounding panels (if you have opening panels). If you have (or are planning to) have lifter mechanisms make sure there is room for this also.
+
+TIP: You can heat the fibers gently with a gas flame or heat gun to bend them easier. Then you can make sharper turns on the outer ones, gaining more space next to surrounding hinges. Be careful not to overheat as the fiber mai stretch or kink. This will affect it's ability to let light pass through it.
+
+When threading the fibers I recommend starting in the middle and working your way out symetrically to avoid warping. 
+
+Note: You may have to make a slight "bend" between the front and back for the bottom front logic display to make everything fit. (Front and back plates not being parallel)
+
+I did not use any glue on any of the fibers, as the tension in it all keeps it in place well enough so far. If you notice significant warping in the front plate you might need more infill, or even just scale it slightly in the Z direction (printed with front face down; ridges are on the back side)
+
+
+Rear display
+------------
+The rear display works in the same way, but should be threaded after mounting. Mount the front plate and the LED bases, then thread fivers in through the front and into the base. Take care to leave room for hinges and lifting mechanisms if you have (or plan to have) any. Take care to insert fibers in the corresponding hole (30x5 matrix) or some of the effects will not display properly. If you only will use the random lights effect the order is not important.
+
+
+PSIs
+----
+The PSIs require no optic fibers. They are simply holders for LEDs made to fit directly into the front and rear PSI mounts by MR Baddeley. 
+
+
+
+
+ASSEMBLY
+========
+
+To keep the LEDs in the holder I used a few dabs of hot glue.
+
+
+
+
