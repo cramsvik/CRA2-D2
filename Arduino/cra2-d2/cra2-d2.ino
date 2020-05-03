@@ -40,12 +40,12 @@
 #define LEDcountRPSI 12
 
 // Some variables to set animation speed for the RGB test:
-#define RGBtestAnimationSpeed 10        // Set to 0 to skip RGB test at startup
-#define RGBtestDelayBetweenColors 250
+#define RGBtestAnimationSpeed 0        // Set to 0 to skip RGB test at startup
+#define RGBtestDelayBetweenColors 150
 
 
 // Define default text for scroll display. Used once during startup procedure (after RGB-test)
-String displayTextFTLD = "R2-D2";
+String displayTextFTLD = "R2-D2                ";
 String displayTextFBLD = "          POWERING UP";
 String displayTextRLD  = "BY CHRISTIAN RAMSVIK";
 
@@ -54,7 +54,7 @@ byte brightness = 24;   // Overall display brightness default value
 int lingerON  = 1800;    // Factor for how long to keep LED on MAX when in random mode. Increase to keep LEDs at max longer.
 int lingerOFF = 500;    // Factor for how long to keep LED off when in random mode. Increase to keep LEDs off longer.
 int textSpeed = 30;    // A delay-factor adjusting the scrolling speed of the text
-
+int lingerPSI = 200;   // Adjust the chance of the PSI changing color each cycle. 1000 is an OK value.
 
 // This is where you define the matrix for each screen. If you hooked your LED chains differently than
 // what is default (look in the instruction PDF) you will need to make adjustments
@@ -87,7 +87,7 @@ Adafruit_NeoMatrix matrixFTLD = Adafruit_NeoMatrix(10, 5, pinFTLD,
 
 // Define NeoMatrix strand for Front Bottom Logic Display
 Adafruit_NeoMatrix matrixFBLD = Adafruit_NeoMatrix(10, 5, pinFBLD,
-  NEO_MATRIX_TOP     + NEO_MATRIX_RIGHT +
+  NEO_MATRIX_BOTTOM  + NEO_MATRIX_LEFT +
   NEO_MATRIX_ROWS    + NEO_MATRIX_ZIGZAG,
   NEO_RGB            + NEO_KHZ800);
 
@@ -130,11 +130,11 @@ byte actionRLD  = 1;
 
 // Define an array of bytes to keep info about each LED. One array pr logic display with total number of LEDs
 // Stores info about color, intensity and direction of fade (up/down)
-byte rndFTLD[LEDcountFTLD] = {};
-byte rndFBLD[LEDcountFBLD] = {};
-byte rndRLD[LEDcountRLD]   = {};
-byte rndFPSI[LEDcountFPSI]  = {};
-byte rndRPSI[LEDcountRPSI]  = {};
+byte rndFTLD[LEDcountFTLD] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+byte rndFBLD[LEDcountFBLD] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+byte rndRLD[LEDcountRLD]   = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+byte rndFPSI[LEDcountFPSI] = {0,0,0,0,0,0,0,0,0,0,0,0};
+byte rndRPSI[LEDcountRPSI] = {0,0,0,0,0,0,0,0,0,0,0,0};
 
 byte barGraphRANDOMIZER[30]={2,0,2,1,1,3,0,1,3,3,2,1,3,0,1,3,2,1,3,0,1,2,2,0,1,3,3,3,0,1};
 
@@ -145,16 +145,16 @@ byte barGraphRANDOMIZER[30]={2,0,2,1,1,3,0,1,3,3,2,1,3,0,1,3,2,1,3,0,1,2,2,0,1,3
 // 1    Gradient
 // 2    Gradient
 // 3    Gradient
-// 4    Linger    Linger is handled in separate random function. Use for more fade levels instead?  
-// 5    Linger    Linger is handled in separate random function. Use for more colors instead?
-// 6    Color (0 blue, 1 white)
+// 4    Color \  
+// 5    Color  } (0 blue, 1 white)
+// 6    Color /
 // 7    0 falling, 1 rising
 
 // Variables for keeping track of milliseconds. Relates to timing.
 unsigned long lastScroll = 0;
 unsigned long lastRandom = 0;
+unsigned long lastFpsi   = 0;
 unsigned long currentMillis; // running clock reference
-
 
 
 // Variables for text scrolling:
@@ -165,29 +165,36 @@ int RLDX  = matrixRLD.width();
 
 
 
-#define colorBLUE  0
-#define colorWHITE 1
-#define colorRED   2
-#define colorAMBER 3
-#define colorGREEN 4
+# define colorBLUE    1
+# define colorWHITE   2
+# define colorRED     4
+# define colorAMBER   8
+# define colorGREEN   16
+# define colorYELLOW  32
+# define colorMAGENTA 64
+# define colorCYAN    128
 
 
 // Color scheme for random display. Default blue and white
 // Defined as separate bytes in order to calculate intensity for fade-effect.
 // Need separate function for rear display to have 3 colors.
-const byte predefinedColorList[][3] = {{0,0,255},     // Blue   0
-                                      {255,255,255},  // White  1
-                                      {255,0,0},      // Red    2
-                                      {255,191,0},    // Amber  3
-                                      {0,179,30},     // Green  4
+const byte predefinedColorList[][3] = {{0,0,255},     // Blue    0  1
+                                      {255,255,255},  // White   1  2
+                                      {255,0,0},      // Red     2  4
+                                      {255,191,0},    // Amber   3  8
+                                      {0,179,30},     // Green   4  16
+                                      {255,255,0},    // Yellow  5  32
+                                      {255,0,255},    // Magenta 6  64
+                                      {255,51,204},   // Cyan    7  128
                                      };  
-
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 // Calculates the next state of each pixel stored in an array of bytes
+// effectively fading them up/down to min/max and restarting in random
+// color when 0
 void randomizePixelBYTE(byte &b, byte colorBits){
   // ToDo: parameter for colors to use. (rear LD needs 3 colors)
   // ColorBits is a flag-byte allowing up to 8 colors.
@@ -207,7 +214,13 @@ if(b&143){
 }else{
   ///CRASerial.print(" AT0 ");
     if(random(0,lingerOFF)==0){   // If rare number 0 is hit restart  this LED
-      b = (random(0,2)*16) + 128;// + (random(0,1)*32) + (random(0,1)*16) ;//Skip setting random linger. Handled outside byte (LED has no stored linger)
+      // Select color from available colors in volorBits instead of blue/white as in line above:
+      byte newCol = random(1,9);  // Select a random bit fmor the 8 colors available
+      while(bitRead(colorBits,newCol-1)==0){  // As long as the color is not allowed (bit not set) keep randomizing
+        newCol = random(1,9);   // Bit was not set. Try again.
+      };
+      // A valid color was randomized. Set the pixel:
+      b=(newCol-1 << 4)+128;    // Add 128 to set the rising bit so it fades up from 0.
     }else{
       return; // Random number 0 was NOT hit. Exit; LED stays off until next iteration.
     }
@@ -270,7 +283,8 @@ uint16_t byteColor(byte predefinedColorLists[][3], byte colorNumber){
 
 void ScrollText(Adafruit_NeoMatrix &displayToScroll, String textToScroll, byte colorIndex, int &positionCounter, bool loopDisplay = true ){
   displayToScroll.fillScreen(0);    //Turn off all the LEDs
-displayToScroll.setTextColor(byteColor(predefinedColorList, colorIndex));
+//displayToScroll.setTextColor(byteColor(predefinedColorList, colorIndex-1)); // colorIndex -1 because it refers to the array. color names define value for use in byte.
+displayToScroll.setTextColor(byteColor(predefinedColorList, log(colorIndex)/log(2) )); // use log to calculate bit-index based on value of color 1-2-4-8....
   displayToScroll.setCursor(positionCounter, 5);
   displayToScroll.print(textToScroll);
   if(currentMillis - lastScroll >= textSpeed){
@@ -294,11 +308,9 @@ displayToScroll.setTextColor(byteColor(predefinedColorList, colorIndex));
  * columnsX               The number of columns in (the width of) the display.
  */
 void randomDisplay(byte LEDdefinition[], byte nBytesInArray, Adafruit_NeoMatrix &matrixToUpdate, byte columnsX, byte colorListForPixel=3){
-// wrapper som gjør randomizing.
-//Serial.println("...");
-//Serial.println(nBytesInArray);
+// wrapper to update display after randomizing.
   for (int i=0; i<nBytesInArray; i++) {
-    randomizePixelBYTE(LEDdefinition[i], 3);
+    randomizePixelBYTE(LEDdefinition[i], colorListForPixel);
   }
 //  Serial.println("Call UD");
   updateDisplay( LEDdefinition, nBytesInArray, matrixToUpdate, columnsX);
@@ -429,15 +441,15 @@ Serial.begin(115200);
   matrixRLD.setFont(&TomThumb);
 
 // Set startup actions:
-actionFTLD = doRANDOM;
-actionFBLD = doRANDOM;
-actionRLD  = doGRAPHS;
+actionFTLD = doSCROLL;
+actionFBLD = doSCROLL;
+actionRLD  = doRANDOM;
 
 // Run colortest on all displays (skip is set up for testing):
   if(!loopTEST){
-//    testRGBdisplay(LEDcountFTLD, matrixFTLD);
-//    testRGBdisplay(LEDcountFBLD, matrixFBLD);
-//    testRGBdisplay(LEDcountRLD, matrixRLD);
+    testRGBdisplay(LEDcountFBLD, matrixFBLD);
+    testRGBdisplay(LEDcountRLD,  matrixRLD);
+    testRGBdisplay(LEDcountFTLD, matrixFTLD);
     testRGBdisplay(LEDcountFPSI, matrixFPSI);
     testRGBdisplay(LEDcountRPSI, matrixRPSI);
   }
@@ -456,21 +468,31 @@ if(loopTEST){
   
   currentMillis = millis();
 
-  if(actionFTLD == doRANDOM) randomDisplay(rndFTLD, sizeof(rndFTLD) / sizeof(rndFTLD[0]), matrixFTLD, 10);
-  if(actionFTLD == doSCROLL) ScrollText(matrixFTLD, displayTextFTLD, colorAMBER, FTLDX);
+  if(actionFTLD == doRANDOM) randomDisplay(rndFTLD, sizeof(rndFTLD) / sizeof(rndFTLD[0]), matrixFTLD, 10, colorBLUE+colorWHITE);
+  if(actionFTLD == doSCROLL) ScrollText(matrixFTLD, displayTextFTLD, colorRED, FTLDX);
   if(actionFTLD == doGRAPHS) barGraph(matrixFTLD, 10, rndFTLD);
 
-  if(actionFBLD == doRANDOM) randomDisplay(rndFBLD, sizeof(rndFBLD) / sizeof(rndFBLD[0]), matrixFBLD, 10);
-  if(actionFBLD == doSCROLL) ScrollText(matrixFBLD, displayTextFBLD, colorAMBER, FBLDX);
+  if(actionFBLD == doRANDOM) randomDisplay(rndFBLD, sizeof(rndFBLD) / sizeof(rndFBLD[0]), matrixFBLD, 10, colorBLUE+colorWHITE);
+  if(actionFBLD == doSCROLL) ScrollText(matrixFBLD, displayTextFBLD, colorBLUE, FBLDX);
   if(actionFBLD == doGRAPHS) barGraph(matrixFBLD, 10, rndFBLD);
 
-  if(actionRLD==doRANDOM) randomDisplay(rndRLD, sizeof(rndRLD) / sizeof(rndRLD[0]), matrixRLD, 30);
-  if(actionRLD==doSCROLL) ScrollText(matrixRLD, displayTextRLD, colorAMBER, RLDX);
-  if(actionRLD==doGRAPHS) barGraph(matrixRLD, 30, rndRLD);
+  if(actionRLD == doRANDOM) randomDisplay(rndRLD, sizeof(rndRLD) / sizeof(rndRLD[0]), matrixRLD, 30, colorRED+colorGREEN+colorAMBER);
+  if(actionRLD == doSCROLL) ScrollText(matrixRLD, displayTextRLD, colorAMBER, RLDX);
+  if(actionRLD == doGRAPHS) barGraph(matrixRLD, 30, rndRLD);
+/*
+Serial.print(actionFTLD);
+Serial.print("-");
+Serial.print(actionFBLD);
+Serial.print("-");
+Serial.println(actionRLD);
+*/
+
+//if(actionRLD == doRANDOM) Serial.println("********");
 
 // Testing FPSI:
 //randomDisplay(rndFPSI, sizeof(rndFPSI) / sizeof(rndFPSI[0]), matrixFPSI, 6);
-//setPSI(rndFPSI, matrixFPSI);
+setPSI(rndFPSI, matrixFPSI, 0,2);
+setPSI(rndRPSI, matrixRPSI, 4,5);
 
 //Serial.print(actionFTLD);
   
@@ -556,10 +578,42 @@ void testRGBdisplay(byte nBytesInArray, Adafruit_NeoMatrix &matrixToUpdate){
   delay(RGBtestDelayBetweenColors);
 }
 
-void setPSI(byte LEDdefinition[], Adafruit_NeoMatrix &matrixToUpdate){
-  for(int i=0;i<12;i++){
-    LEDdefinition[i]=79;
+/* ************************************************************************************************
+ * Wrapper function that swaps colors in the PSI displays. It will swap colors 1 and 2 back and forth.
+ * 
+ * LEDdefinition[]        An array of bytes. Each byte represents a LED, and each of the bytes bits defines the LED status (color, intensity, rising/falling). Used to set color in each pixel
+ * matrixToUpdate         The NeoMatrix object. Used for calling functions for updating and displaying the actual LEDs
+ * col1                   the numeric value of color 1 to be used
+ * col2                   the numeric value of color 2 to be used
+ * 
+ */
+void setPSI(byte LEDdefinition[], Adafruit_NeoMatrix &matrixToUpdate, byte col1, byte col2){
+  byte col = (LEDdefinition[0] & 112) >> 4;   // Set col to current color (assuming all LEDs are same color). Then decide if change is needed.
+  bool doFade = bitRead(LEDdefinition[0],7);
+
+  if(doFade){
+    byte idToUpdate =0;
+    for(byte i=0;i<11;i++){
+      idToUpdate = i;
+
+      if(   ((LEDdefinition[i] & 112) >> 4)    !=    ((LEDdefinition[i+1] & 112) >> 4)   ) break;
+    }
+    if(idToUpdate>=10) bitWrite(LEDdefinition[0],7,0); 
+    LEDdefinition[idToUpdate+1] = LEDdefinition[idToUpdate];
+     
+
+  }else if(random(0,lingerPSI)==0){
+ //   Serial.println("**************************************************** CHANGE COLOR ******");
+    if(col==col1){
+      col = col2 << 4;
+      col = col+15;
+    }else{
+      col = col1 << 4;
+      col = col+15;      
+    }
+    LEDdefinition[0] = col+128;
   }
+ 
   updateDisplay(LEDdefinition,  12, matrixToUpdate,  2);
 }
 
